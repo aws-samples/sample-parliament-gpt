@@ -14,7 +14,7 @@
     "@aws-sdk/client-dynamodb": "3.1109.0",
     "@aws-sdk/lib-dynamodb": "3.1109.0",
     "jose": "5.10.0",
-    "next": "15.5.23",
+    "next": "15.5.24",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-markdown": "10.1.0",
