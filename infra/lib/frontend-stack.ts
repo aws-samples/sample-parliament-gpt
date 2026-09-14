@@ -235,7 +235,7 @@ export class FrontendStack extends Stack {
 
     // PreSignUp trigger: enforce the e-mail domain allowlist before any account exists.
     const preSignUpFn = new lambda.Function(this, "PreSignUpFn", {
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_24_X,
       architecture: lambda.Architecture.ARM_64,
       handler: "index.handler",
       code: lambda.Code.fromAsset(path.join(__dirname, "..", "lambda", "pre-signup")),

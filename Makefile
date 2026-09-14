@@ -93,6 +93,9 @@ endif
 deploy-demo: ## Update your pinned demo deployment (configure via Makefile.local)
 	cd infra && npx cdk deploy --all --require-approval never $(DEMO_CONTEXT)
 
+bump-base-images: ## Refresh the Dockerfiles' base-image digest pins (run when the image scanner reports patched OS packages), then rebuild + deploy
+	@scripts/bump-base-images.sh
+
 # Maintainers' publish workflow, run FROM MAIN: exports main (export-ignore strips all
 # internal files), gates + scans the export, then publishes it as a cleaned content
 # mirror to BOTH the internal `public` branch and the GitHub sample repo. The sync tool

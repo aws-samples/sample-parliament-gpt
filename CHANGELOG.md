@@ -9,6 +9,12 @@ Per-jurisdiction data-source details live in `docs/multi-gov/CHANGES.md`.
 ## [Unreleased]
 
 ### Security
+- Container OS patch round: base-image digests refreshed and a dated `OS_PATCH_STAMP`
+  build arg added before the apt-upgrade layer, so a rebuild cannot replay a stale
+  cached layer. Closes the open Debian 13 advisories for glibc, perl, sqlite3, gzip and
+  pcre2 (verified against the built image: every package at its advisory version). New
+  `make bump-base-images` target (`scripts/bump-base-images.sh`) refreshes the pins and
+  the stamp whenever the image scanner reports patched OS packages.
 - Advisory round: token verification decoupled from the code-exchange secret
   (`authConfigured()` vs. new `exchangeConfigured()` — a runtime that can verify but not
   exchange keeps sessions working instead of looping sign-in); answer-fidelity failure

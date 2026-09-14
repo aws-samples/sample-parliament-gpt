@@ -1,4 +1,4 @@
-# ParliamentGPT
+# ParlamentGPT
 
 AI assistant for researching **debates and speeches across multiple parliaments**, answered
 exclusively from each parliament's official open-data service. Started as a German

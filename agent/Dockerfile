@@ -3,7 +3,7 @@
 # Debian pinned to trixie (13, current stable): `python:3.12-slim` re-targets new Debian releases over
 # time, which would swap the whole OS underneath a routine rebuild. Security patches for
 # the pinned release are applied explicitly below.
-FROM public.ecr.aws/docker/library/python:3.12-slim-trixie@sha256:2c941e860699f878900b0edc2403613c234d4b32eda3cc9fa7036991a2a63c4a AS base
+FROM public.ecr.aws/docker/library/python:3.12-slim-trixie@sha256:78387bc3881b8273120a12ebe6c1ab22b018ccc2c9adf565ae1ac9b536e184ea AS base
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -13,7 +13,11 @@ WORKDIR /app
 
 # Apply Debian security updates: the base image lags the security repos, so patched
 # package versions (gnutls, glibc, systemd libs, dpkg, ...) are pulled at build time.
-RUN apt-get update \
+# The stamp busts the layer cache so `apt-get upgrade` actually runs on a rebuild
+# instead of replaying a weeks-old cached layer. scripts/bump-base-images.sh moves it.
+ARG OS_PATCH_STAMP=2026-08-19
+RUN echo "os-patch-stamp: $OS_PATCH_STAMP" \
+  && apt-get update \
   && apt-get -y upgrade \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*

@@ -1,15 +1,18 @@
 # Next.js (standalone output) as a plain HTTP server container, run on ECS Fargate
 # behind an ALB. SSE streaming works natively over the ALB; no adapter layer involved.
-# Debian pinned to trixie (13, current stable): `node:20-slim` re-targets new Debian releases over
+# Debian pinned to trixie (13, current stable): `node:24-slim` re-targets new Debian releases over
 # time, which would swap the whole OS underneath a routine rebuild. Security patches for
 # the pinned release are applied explicitly in the runner stage below.
-FROM public.ecr.aws/docker/library/node:20-trixie-slim@sha256:abfbe12cc943141a0c9e8c0a57d710df1dadd95d35e8662cc02958b284d1f35b AS deps
+# Node major pinned to 24 (active LTS, upstream support to 2028-04-30); Node 20 went
+# end-of-life on 2026-04-30, so the previous 20-trixie-slim pin no longer receives
+# upstream Node patches however current its digest looks.
+FROM public.ecr.aws/docker/library/node:24-trixie-slim@sha256:6950b66b4c0cb0151ce89fa75074673850763d096b044f422c6729b588dd4956 AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 # npm ci only: installs are reproducible from the lockfile or fail loudly.
 RUN npm ci
 
-FROM public.ecr.aws/docker/library/node:20-trixie-slim@sha256:abfbe12cc943141a0c9e8c0a57d710df1dadd95d35e8662cc02958b284d1f35b AS builder
+FROM public.ecr.aws/docker/library/node:24-trixie-slim@sha256:6950b66b4c0cb0151ce89fa75074673850763d096b044f422c6729b588dd4956 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -20,10 +23,14 @@ ENV NEXT_PUBLIC_ENABLED_JURISDICTIONS=$NEXT_PUBLIC_ENABLED_JURISDICTIONS
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-FROM public.ecr.aws/docker/library/node:20-trixie-slim@sha256:abfbe12cc943141a0c9e8c0a57d710df1dadd95d35e8662cc02958b284d1f35b AS runner
+FROM public.ecr.aws/docker/library/node:24-trixie-slim@sha256:6950b66b4c0cb0151ce89fa75074673850763d096b044f422c6729b588dd4956 AS runner
 # Apply Debian security updates: the base image lags the security repos, so patched
 # package versions (gnutls, glibc, systemd libs, dpkg, ...) are pulled at build time.
-RUN apt-get update \
+# The stamp busts the layer cache so `apt-get upgrade` actually runs on a rebuild
+# instead of replaying a weeks-old cached layer. scripts/bump-base-images.sh moves it.
+ARG OS_PATCH_STAMP=2026-08-19
+RUN echo "os-patch-stamp: $OS_PATCH_STAMP" \
+  && apt-get update \
   && apt-get -y upgrade \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
